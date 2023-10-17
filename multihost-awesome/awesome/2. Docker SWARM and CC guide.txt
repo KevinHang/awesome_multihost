@@ -1,0 +1,114 @@
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+# The steps to take and setup are made possible by: https://www.udemy.com/course/learn-to-deploy-hyperledger-fabric-v22-on-multihost/?kw=hyperledger+fabric+mu&src=sac || https://www.tutorialspoint.com/deploy-hyperledger-fabric-v2-2-on-multihost/index.asp
+# The commands for querying the installed cc, extracting package ID, approving the cc, checking which orgs approved the cc, and committing the cc have been modified to work with the provided AWESOME framework cc and configs
+
+# Create AWESOME network
+sudo docker network create --driver=overlay --attachable awesome
+
+# Please replace the IDs with the appropriate one by checking sudo docker node ls
+sudo docker node update --label-add name=server1 gbohs7pqmjsy7qxgis0uvmd0g
+sudo docker node update --label-add name=server2 s8k322v4pxy4fgapaaqyhl2j3
+sudo docker node update --label-add name=server3 upo1nisbk7aj8mpva3x75882e
+# Use sudo docker node inspect ID, to check whether the name label has been added successfully
+
+sudo docker stack deploy -c docker/docker-compose-ca.yaml awesome
+
+# sudo docker ps, to check containers
+
+sudo chmod +rwx ../bin/*
+source ./organizations/fabric-ca/registerEnroll.sh
+createOrg1
+createOrderer
+
+sudo chmod +rwx ../bin/*
+source ./organizations/fabric-ca/registerEnroll.sh
+createOrg2
+
+sudo chmod +rwx ../bin/*
+source ./organizations/fabric-ca/registerEnroll.sh
+createOrg3
+
+# Move Org2 and Org3 to Server1
+# Mover Orderer to server2 and server3
+
+# generate connection profiles
+sudo chmod +rwx organizations/ccp-generate.sh 
+./organizations/ccp-generate.sh
+# Copy the connection profiles so they are in the correct organizations. First move the "awesome" folder
+# DIR=$(pwd)
+# cp "organizations/peerOrganizations/org1.example.com/connection-org1.yaml" "../awesome/organization/org1/gateway/"
+# cp "organizations/peerOrganizations/org2.example.com/connection-org2.yaml" "../awesome/organization/org2/gateway/"
+# cp "organizations/peerOrganizations/org3.example.com/connection-org3.yaml" "../awesome/organization/org3/gateway/"
+
+# Create Genesis Block
+sudo chmod +rwx scripts/*
+./scripts/createConsortium.sh
+
+# Create Channel and Anchor TX
+sudo chmod +rwx scripts/*
+./scripts/createChannelTxandAnchor.sh
+
+# Move channel artifacts to server2 and server3
+
+# Start ordering and peer services
+docker stack deploy -c docker/docker-compose-awesome.yaml -c docker/docker-compose-couch.yaml awesome
+docker stack deploy -c docker/docker-compose-cli.yaml awesome
+# docker stack services awesome
+
+# Login into the CLI1 container:
+# docker ps | grep cli
+docker exec -it fb068ddd7f62 bash
+peer channel create -o orderer.example.com:7050 -c mychannel -f ./channel-artifacts/mychannel.tx --outputBlock ./channel-artifacts/mychannel.block --tls --cafile $ORDERER_CA
+
+
+# Copy the newly created mychannel.block file to the two other VMs.
+# Join the channel using the three newly created CLIs (do this on all three VMs)
+# docker ps | grep cli
+# docker exec -it cliID bash
+peer channel join -b ./channel-artifacts/mychannel.block
+
+# Updating anchor peers:
+#CLI1
+peer channel update -o orderer.example.com:7050 --ordererTLSHostnameOverride orderer.example.com -c mychannel -f ./channel-artifacts/Org1MSPanchors.tx --tls --cafile $ORDERER_CA
+#CLI2
+peer channel update -o orderer.example.com:7050 --ordererTLSHostnameOverride orderer.example.com -c mychannel -f ./channel-artifacts/Org2MSPanchors.tx --tls --cafile $ORDERER_CA
+#CLI3
+peer channel update -o orderer.example.com:7050 --ordererTLSHostnameOverride orderer.example.com -c mychannel -f ./channel-artifacts/Org3MSPanchors.tx --tls --cafile $ORDERER_CA
+
+# package the chaincode:
+# "--lang node" specifies that the chaincode language is JavaScript
+peer lifecycle chaincode package ${CC_PATH}/contract.tar.gz --lang node --path ${CC_PATH}/contract --label cp_0
+# sudo chown -R hang awesome # run this in the multihost-awesome directory
+# install chaincode:
+peer lifecycle chaincode install ${CC_PATH}/contract.tar.gz 
+# Query the installed chaincodes
+OUTPUT=$(peer lifecycle chaincode queryinstalled)
+# Extract the Package ID from the output
+PACKAGE_ID=$(echo "$OUTPUT" | grep -o 'Package ID:.*, Label:' | sed 's/Package ID: //' | sed 's/, Label://')
+# Export the Package ID as an environment variable
+export PACKAGE_ID
+# Print the Package ID
+echo "Package ID: $PACKAGE_ID"
+# Approve the chaincode
+peer lifecycle chaincode approveformyorg --orderer orderer.example.com:7050 --channelID mychannel --name awesome -v 0 --package-id $PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA
+# Check which orgs have approved the cc
+peer lifecycle chaincode checkcommitreadiness --channelID mychannel --name awesome --version 0 --sequence 1 --output json --tls --cafile $ORDERER_CA
+# ./scripts/packageInstallApproveCC.sh
+
+# Only needs to be run on CLI1, committing the chaincode:
+source ./scripts/envVar.sh
+parsePeerConnectionParameters 1 2 3
+peer lifecycle chaincode commit --orderer orderer.example.com:7050 --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles ${PEER0_ORG1_CA} --peerAddresses peer0.org2.example.com:9051 --tlsRootCertFiles ${PEER0_ORG2_CA} --peerAddresses peer0.org3.example.com:11051 --tlsRootCertFiles ${PEER0_ORG3_CA} --channelID mychannel --name awesome -v 0 --sequence 1 --tls --cafile $ORDERER_CA --waitForEvent
+
+# query commited cc (not working)
+# peer lifecycle chaincode querycommitted --channelID mychannel --name awesome --output json --tls --cafile $ORDERER_CA --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles ${PEER0_ORG1_CA} 
+
+
+
+
