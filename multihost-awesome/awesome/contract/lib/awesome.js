@@ -579,8 +579,22 @@ class Awesome extends Contract {
                 sla = await this.addWitnessesToSLA(ctx, sla);
                 await this.addSLAToUsers(ctx, sla, slaID);
                 sla = await this.setSLAdeadline(ctx, sla);
+
                 await ctx.stub.putState('sla' + slaID, Buffer.from(JSON.stringify(sla)));
-                service.active = false;
+
+                // auction end event ±
+                let registerEvent = {
+                    type: "auction has ended",
+                    highestBid: biggestBid,
+                    theprovider: provider,
+                    thecustomer: customer,
+                    auctobject: auctionObject,
+                    allwitness: witnesses,
+
+                };
+                await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
+
+                service.active = "awaiting provisioning";
                 await ctx.stub.putState(serviceNumber, Buffer.from(JSON.stringify(service)));
             } else if (auctionObject.auctionRules.auctionType == 'spsb') {
                 var biggest = 0;
@@ -613,15 +627,68 @@ class Awesome extends Contract {
                 await this.addSLAToUsers(ctx, sla, slaID);
                 sla = await this.setSLAdeadline(ctx, sla);
                 await ctx.stub.putState('sla' + slaID, Buffer.from(JSON.stringify(sla)));
-                service.active = false;
+
+                // auction end event ±
+                let registerEvent = {
+                    type: "auction has ended",
+                    highestBid: biggestBid,
+                    theprovider: provider,
+                    thecustomer: customer,
+                    auctobject: auctionObject,
+                    allwitness: witnesses,
+                    
+                };
+                await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
+                service.active = "awaiting provisioning";
                 await ctx.stub.putState(serviceNumber, Buffer.from(JSON.stringify(service)));
             }
         } else { // this is wrong, this is bad logic, this is never called
-            service.active = false;
+            // auction end event ±
+            let registerEvent = {
+                type: "auction has ended",
+                highestBid: biggestBid,
+                theprovider: provider,
+                thecustomer: customer,
+                auctobject: auctionObject,
+                allwitness: witnesses,
+                
+            };
+            await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
+            service.active = "awaiting provisioning";
             await ctx.stub.putState(serviceNumber, Buffer.from(JSON.stringify(service)));
         }
         return JSON.stringify(service);
     }
+
+    // ± set auction to false
+    async deactivateService(ctx, serviceNumber) {
+        const serviceAsBytes = await ctx.stub.getState(serviceNumber); // get the service from chaincode state
+        if (!serviceAsBytes || serviceAsBytes.length === 0) {
+            throw new Error(`${serviceNumber} does not exist`);
+        }
+        const service = JSON.parse(serviceAsBytes.toString());
+
+        if(service.active !== "pending") {
+            throw new Error(`Service ${serviceNumber} is not in a pending state and cannot be deactivated.`);
+        }
+
+        service.active = false;
+        await ctx.stub.putState(serviceNumber, Buffer.from(JSON.stringify(service)));
+
+        return JSON.stringify(service);
+    }
+
+    async queryServiceActiveStatus(ctx, serviceNumber) { // ±
+        const serviceAsBytes = await ctx.stub.getState(serviceNumber); // get the service from chaincode state
+        if (!serviceAsBytes || serviceAsBytes.length === 0) {
+            throw new Error(`${serviceNumber} does not exist`);
+        }
+        const service = JSON.parse(serviceAsBytes.toString());
+
+        return service.active;
+    }
+
+
 
     async setSLAdeadline(ctx, sla) {
         var dateTimestamp = ctx.stub.getDateTimestamp();
