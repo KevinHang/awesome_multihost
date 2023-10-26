@@ -579,7 +579,6 @@ class Awesome extends Contract {
                 sla = await this.addWitnessesToSLA(ctx, sla);
                 await this.addSLAToUsers(ctx, sla, slaID);
                 sla = await this.setSLAdeadline(ctx, sla);
-
                 await ctx.stub.putState('sla' + slaID, Buffer.from(JSON.stringify(sla)));
 
                 // auction end event ±
@@ -588,8 +587,7 @@ class Awesome extends Contract {
                     highestBid: biggestBid,
                     theprovider: provider,
                     thecustomer: customer,
-                    auctobject: auctionObject,
-                    allwitness: witnesses,
+                    auctobject: auctionObject
 
                 };
                 await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
@@ -634,8 +632,7 @@ class Awesome extends Contract {
                     highestBid: biggestBid,
                     theprovider: provider,
                     thecustomer: customer,
-                    auctobject: auctionObject,
-                    allwitness: witnesses,
+                    auctobject: auctionObject
                     
                 };
                 await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
@@ -649,9 +646,7 @@ class Awesome extends Contract {
                 highestBid: biggestBid,
                 theprovider: provider,
                 thecustomer: customer,
-                auctobject: auctionObject,
-                allwitness: witnesses,
-                
+                auctobject: auctionObject
             };
             await ctx.stub.setEvent('auctionEnd', Buffer.from(JSON.stringify(registerEvent)));
             service.active = "awaiting provisioning";
