@@ -55,7 +55,25 @@ async function main() {
                     docType: 'vmInstance',
                     properties: [{
                         "commodityKey": "os",
-                        "commodityValue": "Ubuntu 18.04"
+                        "commodityValue": "Ubuntu 18.04",
+                        "data_object": {
+                              "server": {
+                                "name": "test2", // the new should be changed after each creation. Except when instance is deleted
+                                "imageRef": "0525f44b-aaeb-4acd-bade-cee56d3449c0", 
+                                "flavorRef": "1", 
+                                "networks": [
+                                  {
+                                    "uuid": "8e1585a8-fdac-4296-82bf-b46a0e0ea96c" 
+                                  }
+                                ],
+                                "security_groups": [
+                                  {
+                                    "name": "default"
+                                  }
+                                ],
+                                "key_name": "cirrosSSH" // use an already created ssh key
+                              }
+                            },
                     }]
                 },
                 pricing: {
