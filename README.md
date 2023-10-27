@@ -70,6 +70,41 @@ cd multihost-awesome/awesome/organization/org2/application
 node eventListener.js
 ```
 
+Workflow:
+
+1. When ending an auction, it will emit an event (defined in *endAuction* chaincode function)
+2. Events listener catches it and starts communicating with the OpenStack interface (ensure to have configured the OpenStack auhtorization config)
+3. Auction gets marked as pending: *Awaiting provisioning*
+4. Once provisioning has completed, it submits a list of running instances onto the ledger
+
+**Chaincode testing:**
+
+To benchmark the chaincode functions, we have used **Hyperledger Caliper**: https://hyperledger.github.io/caliper/vNext/fabric-tutorial/tutorials-fabric-existing/
+
+Example benchmark (single-host, similar for multi-host):
+
+* Chaincode function: *queryInstances*
+* Worker count: 10
+* txNumber: 1000
+* TPS: 10, 50, 100, 200, 400, 800
+
+```
+cd local/caliper-workspace
+```
+
+```
+cd local/caliper-workspace
+```
+
+```
+npm install
+```
+Run the benchmark:
+```
+npx caliper launch manager --caliper-workspace ./ --caliper-networkconfig networks/networkConfig.yaml --caliper-benchconfig benchmarks/queryInstancesWk10.yaml --caliper-flow-only-test
+```
+
+
 **MiroStack:**
 
 We followed the following steps to install MicroStack our local machine: https://opendev.org/x/microstack

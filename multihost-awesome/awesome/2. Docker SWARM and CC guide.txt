@@ -11,7 +11,7 @@
 # Create AWESOME network
 sudo docker network create --driver=overlay --attachable awesome
 
-# Please replace the IDs with the appropriate one by checking sudo docker node ls
+# Please replace the IDs with the appropriate one by checking sudo docker node ls (run these on manager node)
 sudo docker node update --label-add name=server1 gbohs7pqmjsy7qxgis0uvmd0g
 sudo docker node update --label-add name=server2 s8k322v4pxy4fgapaaqyhl2j3
 sudo docker node update --label-add name=server3 upo1nisbk7aj8mpva3x75882e
@@ -21,49 +21,54 @@ sudo docker stack deploy -c docker/docker-compose-ca.yaml awesome
 
 # sudo docker ps, to check containers
 
+# Run this on the manager node
 sudo chmod +rwx ../bin/*
 source ./organizations/fabric-ca/registerEnroll.sh
 createOrg1
 createOrderer
 
+# Run this on the worker 1
 sudo chmod +rwx ../bin/*
 source ./organizations/fabric-ca/registerEnroll.sh
 createOrg2
 
+# Run this on the worker 2
 sudo chmod +rwx ../bin/*
 source ./organizations/fabric-ca/registerEnroll.sh
 createOrg3
 
-# Move Org2 and Org3 to Server1
-# Mover Orderer to server2 and server3
+# Manually move Org2 (Worker 1 VM) and Org3 (Worker 2 VM) to Manager Node (Manager VM)
+(Worker 1 VM) multi-host/test-network/organizations/peerOrganizations/org2.example.com -> (Manager VM) multi-host/test-network/organizations/peerOrganizations
+(Worker 2 VM) multi-host/test-network/organizations/peerOrganizations/org3.example.com -> (Manager VM) multi-host/test-network/organizations/peerOrganizations
+# Manually move Orderer (Manager VM) to server2 and server3
+(Manager VM) multi-host/test-network/organizations/ordererOrganizations -> (Worker 1 VM) multi-host/test-network/organizations/ & (Worker 2 VM) multi-host/test-network/organizations/
 
-# generate connection profiles
+# generate connection profiles (run this on manager node)
 sudo chmod +rwx organizations/ccp-generate.sh 
 ./organizations/ccp-generate.sh
-# Copy the connection profiles so they are in the correct organizations. First move the "awesome" folder
-# DIR=$(pwd)
-# cp "organizations/peerOrganizations/org1.example.com/connection-org1.yaml" "../awesome/organization/org1/gateway/"
-# cp "organizations/peerOrganizations/org2.example.com/connection-org2.yaml" "../awesome/organization/org2/gateway/"
-# cp "organizations/peerOrganizations/org3.example.com/connection-org3.yaml" "../awesome/organization/org3/gateway/"
+# Copy the connection profiles so they are in the correct organizations.
+cp "organizations/peerOrganizations/org1.example.com/connection-org1.yaml" "../awesome/organization/org1/gateway/"
+cp "organizations/peerOrganizations/org2.example.com/connection-org2.yaml" "../awesome/organization/org2/gateway/"
+cp "organizations/peerOrganizations/org3.example.com/connection-org3.yaml" "../awesome/organization/org3/gateway/"
 
-# Create Genesis Block
+# Create Genesis Block (run this on manager node)
 sudo chmod +rwx scripts/*
 ./scripts/createConsortium.sh
 
-# Create Channel and Anchor TX
+# Create Channel and Anchor TX (run this on manager node)
 sudo chmod +rwx scripts/*
 ./scripts/createChannelTxandAnchor.sh
 
-# Move channel artifacts to server2 and server3
+# Move newly created channel artifacts folder to Worker 1 VM and Worker 2 VM
 
-# Start ordering and peer services
+# Start ordering and peer services (run this on manager node)
 docker stack deploy -c docker/docker-compose-awesome.yaml -c docker/docker-compose-couch.yaml awesome
 docker stack deploy -c docker/docker-compose-cli.yaml awesome
 # docker stack services awesome
 
 # Login into the CLI1 container:
 # docker ps | grep cli
-docker exec -it fb068ddd7f62 bash
+docker exec -it CLIID bash
 peer channel create -o orderer.example.com:7050 -c mychannel -f ./channel-artifacts/mychannel.tx --outputBlock ./channel-artifacts/mychannel.block --tls --cafile $ORDERER_CA
 
 
@@ -99,7 +104,6 @@ echo "Package ID: $PACKAGE_ID"
 peer lifecycle chaincode approveformyorg --orderer orderer.example.com:7050 --channelID mychannel --name awesome -v 0 --package-id $PACKAGE_ID --sequence 1 --tls --cafile $ORDERER_CA
 # Check which orgs have approved the cc
 peer lifecycle chaincode checkcommitreadiness --channelID mychannel --name awesome --version 0 --sequence 1 --output json --tls --cafile $ORDERER_CA
-# ./scripts/packageInstallApproveCC.sh
 
 # Only needs to be run on CLI1, committing the chaincode:
 source ./scripts/envVar.sh
@@ -107,7 +111,7 @@ parsePeerConnectionParameters 1 2 3
 peer lifecycle chaincode commit --orderer orderer.example.com:7050 --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles ${PEER0_ORG1_CA} --peerAddresses peer0.org2.example.com:9051 --tlsRootCertFiles ${PEER0_ORG2_CA} --peerAddresses peer0.org3.example.com:11051 --tlsRootCertFiles ${PEER0_ORG3_CA} --channelID mychannel --name awesome -v 0 --sequence 1 --tls --cafile $ORDERER_CA --waitForEvent
 
 # query commited cc (not working)
-# peer lifecycle chaincode querycommitted --channelID mychannel --name awesome --output json --tls --cafile $ORDERER_CA --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles ${PEER0_ORG1_CA} 
+peer lifecycle chaincode querycommitted --channelID mychannel --name awesome --peerAddresses peer0.org1.example.com:7051 --tlsRootCertFiles ${PEER0_ORG1_CA} --tls --cafile $ORDERER_CA
 
 
 

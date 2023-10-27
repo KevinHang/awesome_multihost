@@ -1,0 +1,74 @@
+test:
+    name: awesome-contract-benchmark-queryInstances
+    description: Query OpenStack Instances stored on the Ledger Benchmark 10 Workers
+    workers:
+      number: 10
+    rounds:
+      - label: queryInstances-round1-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 10
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+      - label: queryInstances-round2-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 50
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+      - label: queryInstances-round3-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 100
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+      - label: queryInstances-round4-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 200
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+      - label: queryInstances-round5-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 400
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+      - label: queryInstances-round6-wk10
+        description: submitting auctions benchmark
+        txNumber: 1000
+        rateControl:
+          type: fixed-rate
+          opts:
+            tps: 800
+        workload:
+          module: workload/queryInstances.js
+          arguments:
+            contractId: awesome
+
+

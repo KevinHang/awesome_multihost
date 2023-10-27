@@ -112,7 +112,7 @@ async function main() {
                 }],
                 witnessGlobalRules: {
                     n: '1',
-                    m: '2',
+                    m: '0',
                     cFee: '50',
                     pFee: '50',
                     witnessGamePeriod: {
