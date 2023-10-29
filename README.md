@@ -1,6 +1,9 @@
 Based on:
 AWESOME: an auction and witness enhanced SLA model for decentralized cloud marketplaces
-https://journalofcloudcomputing.springeropen.com/articles/10.1186/s13677-022-00292-8?
+https://journalofcloudcomputing.springeropen.com/articles/10.1186/s13677-022-00292-8
+
+A Customizable dApp Framework for User Interactions in Decentralized Service Marketplaces
+https://ieeexplore.ieee.org/abstract/document/9874498
 
 # awesome multi-host
 
