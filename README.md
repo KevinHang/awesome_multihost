@@ -1,11 +1,3 @@
-Based on:
-
-AWESOME: an auction and witness enhanced SLA model for decentralized cloud marketplaces
-https://journalofcloudcomputing.springeropen.com/articles/10.1186/s13677-022-00292-8
-
-A Customizable dApp Framework for User Interactions in Decentralized Service Marketplaces
-https://ieeexplore.ieee.org/abstract/document/9874498
-
 # awesome multi-host
 
 For both of the deployments (single-host and multi-host), please first meet following prerequisites:
@@ -116,4 +108,14 @@ npx caliper launch manager --caliper-workspace ./ --caliper-networkconfig networ
 **MiroStack:**
 
 We followed the following steps to install MicroStack our local machine: https://opendev.org/x/microstack
+
+**Related Work**
+
+Based on:
+
+AWESOME: an auction and witness enhanced SLA model for decentralized cloud marketplaces
+https://journalofcloudcomputing.springeropen.com/articles/10.1186/s13677-022-00292-8
+
+A Customizable dApp Framework for User Interactions in Decentralized Service Marketplaces
+https://ieeexplore.ieee.org/abstract/document/9874498
 
