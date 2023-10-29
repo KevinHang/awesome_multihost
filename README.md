@@ -1,3 +1,7 @@
+Based on:
+AWESOME: an auction and witness enhanced SLA model for decentralized cloud marketplaces
+https://journalofcloudcomputing.springeropen.com/articles/10.1186/s13677-022-00292-8?
+
 # awesome multi-host
 
 For both of the deployments (single-host and multi-host), please first meet following prerequisites:
